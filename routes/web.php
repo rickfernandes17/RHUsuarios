@@ -1,7 +1,8 @@
 <?php
 
+use App\Http\Controllers\EmpresaController;
+use App\Http\Controllers\FuncionarioController;
 use Illuminate\Support\Facades\Route;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -14,5 +15,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('funcionarios.index');
 });
+
+Route::resource('empresas', EmpresaController::class)->only(['index', 'create', 'store']);
+Route::resource('funcionarios', FuncionarioController::class)->only(['index', 'create', 'store']);
+
