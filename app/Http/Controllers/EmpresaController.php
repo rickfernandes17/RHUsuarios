@@ -36,7 +36,7 @@ class EmpresaController extends Controller
                 'string',
                 'max:255',
                 'unique:empresas,dominio',
-                'regex:/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/' // validação básica de domínio
+                'regex:/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](\.[a-zA-Z]{2,})+$/' // validação básica de domínio
             ],
         ], [
             'nome.required' => 'O nome da empresa é obrigatório.',

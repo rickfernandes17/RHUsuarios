@@ -64,20 +64,22 @@ return [
         ],
 
         'mysql_postfix' => [
-            'driver' => 'mysql',
-            'host' => env('DB_POSTFIX_HOST', '127.0.0.1'),
-            'port' => env('DB_POSTFIX_PORT', '3306'),
-            'database' => env('DB_POSTFIX_DATABASE', 'postfixadmin_simulated'),
-            'username' => env('DB_POSTFIX_USERNAME', 'root'),
-            'password' => env('DB_POSTFIX_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => 'utf8mb4',
+            'driver'    => 'mysql',
+            'host'      => env('DB_POSTFIX_HOST', '192.168.0.111'),
+            'port'      => env('DB_POSTFIX_PORT', '3306'),
+            'database'  => env('DB_POSTFIX_DATABASE', 'postfixadmin'),
+            'username'  => env('DB_POSTFIX_USERNAME', ''),
+            'password'  => env('DB_POSTFIX_PASSWORD', ''),
+            'unix_socket' => '',
+            'charset'   => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
+            'prefix'    => '',
             'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
+            // strict=false: necessário pois o PostfixAdmin usa datas como 0000-00-00
+            // que seriam rejeitadas no modo estrito do MySQL
+            'strict'    => false,
+            'engine'    => null,
+            'options'   => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],

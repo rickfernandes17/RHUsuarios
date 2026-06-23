@@ -15,19 +15,24 @@ class PostfixAdminService
      */
     public function hashPassword(string $password): string
     {
-        $scheme = env('POSTFIX_PASSWORD_SCHEME', 'md5');
+        $scheme = env('POSTFIX_PASSWORD_SCHEME', 'md5crypt');
         $prefix = env('POSTFIX_PASSWORD_PREFIX', '');
 
-        $hash = '';
-        if ($scheme === 'md5') {
-            $hash = md5($password);
-        } elseif ($scheme === 'md5crypt') {
-            // MD5-Crypt usa salt de 8 caracteres e inicia com $1$
+        if ($scheme === 'md5crypt') {
+            // MD5-Crypt: gera hash no formato $1$SALT$HASH — compatível com Dovecot
             $salt = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 8);
             $hash = crypt($password, '$1$' . $salt . '$');
+        } elseif ($scheme === 'sha512crypt') {
+            // SHA512-Crypt: gera hash no formato $6$SALT$HASH — mais seguro
+            $salt = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+            $hash = crypt($password, '$6$' . $salt . '$');
         } elseif ($scheme === 'bcrypt') {
             $hash = password_hash($password, PASSWORD_BCRYPT);
+        } elseif ($scheme === 'md5') {
+            // MD5 puro (sem salt) — evitar em produção
+            $hash = md5($password);
         } else {
+            // Fallback: armazena em texto plano (não recomendado)
             $hash = $password;
         }
 
