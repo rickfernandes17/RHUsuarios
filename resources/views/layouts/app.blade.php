@@ -23,6 +23,11 @@
             </a>
             <ul class="navbar-nav">
                 <li>
+                    <a href="http://webmail.meudominio.local/" target="_blank" class="nav-link {{ Request::is('funcionarios*') ? 'active' : '' }}">
+                        Webmail
+                    </a>
+                </li>
+                <li>
                     <a href="{{ route('funcionarios.index') }}" class="nav-link {{ Request::is('funcionarios*') ? 'active' : '' }}">
                         Funcionários
                     </a>

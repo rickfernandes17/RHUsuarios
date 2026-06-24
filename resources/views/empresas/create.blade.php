@@ -17,7 +17,7 @@
     <div class="card">
         <form action="{{ route('empresas.store') }}" method="POST">
             @csrf
-            
+
             <div class="form-group">
                 <label for="nome" class="form-label">Nome da Empresa</label>
                 <input type="text" name="nome" id="nome" class="form-control" placeholder="Ex: Acme Corporation Ltda" value="{{ old('nome') }}" required>
@@ -31,6 +31,23 @@
                 </div>
                 <small style="display: block; margin-top: 0.5rem; color: var(--text-muted);">
                     Não digite o símbolo '@', apenas o domínio (ex: acme.com ou acme.com.br). Este domínio será usado para criar as caixas de e-mail.
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="ou_dn" class="form-label">OU no Active Directory</label>
+                <input
+                    type="text"
+                    name="ou_dn"
+                    id="ou_dn"
+                    class="form-control"
+                    placeholder="Ex: OU=Empresas,DC=empresa,DC=local"
+                    value="{{ old('ou_dn', 'OU=Empresas,DC=meudominio,DC=local') }}"
+                    required>
+
+                <small style="display: block; margin-top: 0.5rem; color: var(--text-muted);">
+                    Informe a OU pai onde será criada a OU desta empresa.
+                    Exemplo: OU=Empresas,DC=empresa,DC=local
                 </small>
             </div>
 

@@ -15,6 +15,7 @@ class Empresa extends Model
     protected $fillable = [
         'nome',
         'dominio',
+        'ou_dn',
     ];
 
     /**

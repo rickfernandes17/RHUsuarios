@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Empresa;
 use Illuminate\Http\Request;
+use LdapRecord\Models\ActiveDirectory\OrganizationalUnit;
+use Illuminate\Support\Facades\Log;
 
 class EmpresaController extends Controller
 {
@@ -38,17 +40,61 @@ class EmpresaController extends Controller
                 'unique:empresas,dominio',
                 'regex:/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](\.[a-zA-Z]{2,})+$/' // validação básica de domínio
             ],
+            'ou_dn' => 'required|string|max:500',
         ], [
             'nome.required' => 'O nome da empresa é obrigatório.',
             'dominio.required' => 'O domínio é obrigatório.',
             'dominio.unique' => 'Este domínio já está cadastrado no sistema.',
             'dominio.regex' => 'O formato do domínio é inválido. Exemplo: empresa.com ou empresa.com.br',
+            'ou_dn.required' => 'A OU no Active Directory é obrigatória.',
         ]);
 
         // Formata o domínio para minúsculo
         $validated['dominio'] = strtolower(trim($validated['dominio']));
 
-        Empresa::create($validated);
+        try {
+            $ouName = trim($validated['nome']);
+
+            $baseDn = 'OU=Empresas,DC=meudominio,DC=local';
+
+            // OU principal da empresa
+            $empresaOu = new OrganizationalUnit();
+            $empresaOu->setAttribute('ou', $ouName);
+            $empresaOu->inside($baseDn);
+            $empresaOu->save();
+
+            $empresaDn = "OU={$ouName},{$baseDn}";
+
+            // OUs filhas
+            $subOus = [
+                'Usuarios',
+                'Grupos',
+                'Computadores',
+                'Servidores',
+                'Desativados',
+            ];
+
+            foreach ($subOus as $subOu) {
+
+                $ou = new OrganizationalUnit();
+                $ou->setAttribute('ou', $subOu);
+                $ou->inside($empresaDn);
+                $ou->save();
+            }
+
+            $validated['ou_dn'] = $empresaDn;
+
+            Empresa::create($validated);
+        } catch (\Exception $e) {
+
+            Log::error('Erro ao criar OU: ' . $e->getMessage());
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'ldap' => 'Erro ao criar OU no Active Directory: ' . $e->getMessage()
+                ]);
+        }
 
         return redirect()->route('empresas.index')->with('success', 'Empresa cadastrada com sucesso!');
     }
