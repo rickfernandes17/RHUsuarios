@@ -19,6 +19,8 @@ class Funcionario extends Model
         'cpf',
         'cargo',
         'email_corporativo',
+        'login_rede',
+        'user_dn',
     ];
 
     /**

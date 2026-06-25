@@ -42,7 +42,7 @@
                     id="ou_dn"
                     class="form-control"
                     placeholder="Ex: OU=Empresas,DC=empresa,DC=local"
-                    value="{{ old('ou_dn', 'OU=Empresas,DC=meudominio,DC=local') }}"
+                    value="{{ old('ou_dn', 'OU=Empresas,DC=meudominio,DC=ad') }}"
                     required>
 
                 <small style="display: block; margin-top: 0.5rem; color: var(--text-muted);">

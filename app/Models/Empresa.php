@@ -16,6 +16,11 @@ class Empresa extends Model
         'nome',
         'dominio',
         'ou_dn',
+        'usuarios_ou_dn',
+        'grupos_ou_dn',
+        'computadores_ou_dn',
+        'servidores_ou_dn',
+        'desativados_ou_dn',
     ];
 
     /**

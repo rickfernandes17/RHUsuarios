@@ -8,14 +8,20 @@ use App\Services\PostfixAdminService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use LdapRecord\Models\ActiveDirectory\User;
+use App\Services\ActiveDirectoryService;
 
 class FuncionarioController extends Controller
 {
     protected $postfixService;
+    protected $activeDirectoryService;
 
-    public function __construct(PostfixAdminService $postfixService)
-    {
+    public function __construct(
+        PostfixAdminService $postfixService,
+        ActiveDirectoryService $activeDirectoryService
+    ) {
         $this->postfixService = $postfixService;
+        $this->activeDirectoryService = $activeDirectoryService;
     }
 
     /**
@@ -74,6 +80,7 @@ class FuncionarioController extends Controller
         ]);
 
         $empresa = Empresa::findOrFail($request->empresa_id);
+        $usuariosOu = $empresa->usuarios_ou_dn;
 
         // Gera o endereço de e-mail corporativo completo
         $emailLocal = strtolower(trim($request->email_local));
@@ -85,6 +92,12 @@ class FuncionarioController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['email_local' => 'Este e-mail corporativo já está em uso por outro funcionário.']);
+        }
+        $existsLocal = Funcionario::where('login_rede', $emailLocal)->exists();
+        if ($existsLocal) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['email_local' => 'Este login de rede já está em uso por outro funcionário.']);
         }
 
         try {
@@ -114,11 +127,25 @@ class FuncionarioController extends Controller
                 $empresa->dominio
             );
 
+            // 3. Criar usuarios no Active Directory
+            $adUser = $this->activeDirectoryService->createUser(
+                $validated['nome'],
+                $validated['sobrenome'],
+                strtolower($emailLocal),
+                $validated['email_password'],
+                $empresa->usuarios_ou_dn,
+                $emailCorporativo
+            );
+
+            $funcionario->update([
+                'login_rede' => $adUser['login'],
+                'user_dn' => $adUser['dn']
+            ]);
+
             DB::commit();
 
             return redirect()->route('funcionarios.index')
                 ->with('success', "Funcionário {$nomeCompleto} cadastrado e e-mail corporativo ({$emailCorporativo}) criado com sucesso no PostfixAdmin!");
-
         } catch (\Exception $exception) {
             DB::rollBack();
             Log::error("Falha no cadastro do funcionário e criação de e-mail. Transação desfeita. Erro: " . $exception->getMessage());

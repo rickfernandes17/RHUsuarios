@@ -55,7 +55,7 @@ class EmpresaController extends Controller
         try {
             $ouName = trim($validated['nome']);
 
-            $baseDn = 'OU=Empresas,DC=meudominio,DC=local';
+            $baseDn = $validated['ou_dn'];
 
             // OU principal da empresa
             $empresaOu = new OrganizationalUnit();
@@ -64,6 +64,12 @@ class EmpresaController extends Controller
             $empresaOu->save();
 
             $empresaDn = "OU={$ouName},{$baseDn}";
+
+            $usuariosDn     = "OU=Usuarios,{$empresaDn}";
+            $gruposDn       = "OU=Grupos,{$empresaDn}";
+            $computadoresDn = "OU=Computadores,{$empresaDn}";
+            $servidoresDn   = "OU=Servidores,{$empresaDn}";
+            $desativadosDn  = "OU=Desativados,{$empresaDn}";
 
             // OUs filhas
             $subOus = [
@@ -83,6 +89,11 @@ class EmpresaController extends Controller
             }
 
             $validated['ou_dn'] = $empresaDn;
+            $validated['usuarios_ou_dn'] = $usuariosDn;
+            $validated['grupos_ou_dn'] = $gruposDn;
+            $validated['computadores_ou_dn'] = $computadoresDn;
+            $validated['servidores_ou_dn'] = $servidoresDn;
+            $validated['desativados_ou_dn'] = $desativadosDn;
 
             Empresa::create($validated);
         } catch (\Exception $e) {
