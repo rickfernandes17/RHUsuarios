@@ -100,6 +100,7 @@ class FuncionarioController extends Controller
                 ->withErrors(['email_local' => 'Este login de rede já está em uso por outro funcionário.']);
         }
 
+        $emailCriado = false;
         try {
             // Usamos uma transação para garantir consistência no banco do sistema de RH local
             DB::beginTransaction();
@@ -120,12 +121,14 @@ class FuncionarioController extends Controller
             // 2. Cria a caixa postal e aliases no PostfixAdmin via conexão secundária
             // Caso ocorra alguma exceção no banco do PostfixAdmin, ela será capturada
             // e fará o rollback do funcionário no banco local.
-            $this->postfixService->createMailAccount(
+           $this->postfixService->createMailAccount(
                 $nomeCompleto,
                 $emailCorporativo,
                 $request->email_password,
                 $empresa->dominio
             );
+
+            $emailCriado = true;
 
             // 3. Criar usuarios no Active Directory
             $adUser = $this->activeDirectoryService->createUser(
@@ -150,9 +153,18 @@ class FuncionarioController extends Controller
             DB::rollBack();
             Log::error("Falha no cadastro do funcionário e criação de e-mail. Transação desfeita. Erro: " . $exception->getMessage());
 
+            if ($emailCriado) {
+                try {
+                    $this->postfixService->deleteMailAccount($emailCorporativo);
+                    Log::info("E-mail {$emailCorporativo} removido devido a erro posterior no cadastro.");
+                } catch (\Exception $deleteException) {
+                    Log::error("Falha ao remover e-mail {$emailCorporativo} após erro de cadastro: " . $deleteException->getMessage());
+                }
+            }
+
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['error' => 'Falha ao integrar com o servidor de e-mails PostfixAdmin. Verifique se o banco do PostfixAdmin está acessível e tente novamente. Detalhes: ' . $exception->getMessage()]);
+                ->withErrors(['error' => 'Falha ao realizar o cadastro do funcionário. Detalhes: ' . $exception->getMessage()]);
         }
     }
 }

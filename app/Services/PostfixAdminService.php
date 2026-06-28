@@ -119,4 +119,31 @@ class PostfixAdminService
             throw $exception;
         }
     }
+
+    /**
+     * Exclui uma conta de e-mail (Mailbox e Alias) no PostfixAdmin.
+     */
+    public function deleteMailAccount(string $username): bool
+    {
+        $username = strtolower(trim($username));
+
+        try {
+            DB::connection('mysql_postfix')->beginTransaction();
+
+            // 1. Exclui o alias associado
+            PostfixAlias::where('address', $username)->delete();
+
+            // 2. Exclui a mailbox associada
+            PostfixMailbox::where('username', $username)->delete();
+
+            DB::connection('mysql_postfix')->commit();
+            Log::info("E-mail {$username} removido com sucesso do PostfixAdmin.");
+            return true;
+        } catch (\Exception $exception) {
+            DB::connection('mysql_postfix')->rollBack();
+            Log::error("Erro ao remover e-mail no PostfixAdmin: " . $exception->getMessage());
+            return false;
+        }
+    }
 }
+
